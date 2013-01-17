@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+REGION="us-west-2"
+
+instance_id=ARGV[0]
+
+describe_out = `ec2-describe-instances #{instance_id} --region #{REGION}`
+describe_results = describe_out.split
+instance_status  = describe_results[9]
+instance_address = describe_results[7]
+
+mref = `cat .git/refs/heads/master`.slice 0, 10
+AMI_NAME = "#{IMAGE_NAME}-#{mref}"
+
+# # Create an AMI Snapshot of Running Image
+echo ec2-create-image -n ${AMI_NAME} ${instance_id}
+
+# # Show Status of AMI Deployment
+# echo ec2-describe-images -o self
+

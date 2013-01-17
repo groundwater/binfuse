@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+require 'open3'
+require 'base64'
+
+ROOT_DIR = File.expand_path File.join( __FILE__, "..", "..")
+
+KEY_PAIR="NodeFly Master"
+BASE_AMI="ami-7e2da54e"
+REGION="us-west-2"
+USER="ubuntu"
+ENVS=".env"
+BRANCH="master"
+IMAGE_NAME="general"
+
+# Launch a New Instance
+# - Returns Instance Details (http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/launching-an-instance.html)
+run_out = `ec2-run-instances #{BASE_AMI} -k '#{KEY_PAIR}' --region '#{REGION}' --user-data-file #{ENVS}`
+run_results = run_out.split
+instance_id = run_results[5]
+instance_status = run_results[7]
+puts instance_id

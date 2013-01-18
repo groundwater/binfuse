@@ -5,12 +5,27 @@
 
 require 'open3'
 require 'base64'
+require 'trollop'
 
-KEY_PAIR="NodeFly Master"
-BASE_AMI="ami-7e2da54e"
-REGION="us-west-2"
-USER="ubuntu"
-ENVS=".env"
+opts = Trollop::options do
+  banner <<-EOS
+Create a new blank EC2 Image from a base AMI and returns its instance id.
+
+Usage:
+  binfuse-deploy-create [options]
+
+where [options] are:
+  EOS
+  opt :region,      "EC2 Region",       :short => 'r', :type => :string, :default => 'us-west-2'
+  opt :ami,         "Base AMI",         :short => 'A', :type => :string, :default => 'ami-7e2da54e'
+  opt :keypair,      "Key Pair Name",   :short => 'k', :type => :string, :default => 'NodeFly Master'
+  opt :environment, "Environment File", :short => 'E', :type => :string
+end
+
+KEY_PAIR=opts[:keypair]
+BASE_AMI=opts[:ami]
+REGION  =opts[:region]
+ENVS    =opts[:environment]
 
 # Launch a New Instance
 # - Returns Instance Details (http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/launching-an-instance.html)

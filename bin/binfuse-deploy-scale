@@ -1,35 +1,67 @@
 #!/usr/bin/env ruby
 
-NAME=ARGV[0]
-AMI_ID=ARGV[1]
+require 'trollop'
 
-USER_DATA_FILE=".env"
-INSTANCE_TYPE="m1.small"
-REGION="us-west-2"
-ELB="demo"
+USAGE    = <<-EOF
+Package a fully configured EC2 image as an AMI
+
+Usage: 
+  binfuse-deploy-package <ami-name> <instance-id> [options]
+where [options] are:
+EOF
+
+opts = Trollop::options do
+  banner USAGE
+  opt :elb, "Use Elastic Load Balancer",:shoft => 'L', :type => :string
+  opt :environment, "Environment File", :short => 'E', :type => :string
+  opt :itype,       "Instance Type",    :shoft => 'T', :type => :string, :default => 'm1.small'
+  opt :region,      "EC2 Region",       :short => 'r', :type => :string, :default => 'us-west-2'
+  opt :min,         "Minimum Instance", :short => 'm', :default => 0
+  opt :max,         "Maximum Instance", :short => 'M', :default => 0
+  opt :zones,     "Availability Zones", :short => 'Z', :type => :string, :default => 'us-west-2a,us-west-2b,us-west-2c'
+end
+
+if ARGV.length < 2
+  Trollop::die "Please Specify a Group Name and Base AMI"
+end
+
+REGION=opts[:region]
+
+NAME  =ARGV.shift
+AMI_ID=ARGV.shift
+
+ENVIRONMENT   =opts[:environment]
+INSTANCE_TYPE =opts[:itype]
+LOAD_BALANCER =opts[:elb]
 
 config = "--launch-configuration #{NAME}"
-azones = "--availability-zones us-west-2c,us-west-2a"
-sizes  = "--min-size 2 --max-size 2"
 region = "--region #{REGION}"
-loadb  = "--load-balancers #{ELB}"
-health = "--health-check-type ELB --grace-period 300"
 ami_id = "--image-id #{AMI_ID}"
-data   = "--user-data-file #{USER_DATA_FILE}"
 type   = "--instance-type #{INSTANCE_TYPE}"
+
+# Optional Settings
+loadb  = "--load-balancers #{LOAD_BALANCER}"          if LOAD_BALANCER
+health = "--health-check-type ELB --grace-period 300" if LOAD_BALANCER
+data   = "--user-data-file #{ENVIRONMENT}"            if ENVIRONMENT
+
+# Options with Defaults
+azones = "--availability-zones #{opts[:zones]}"
+sizes  = "--min-size #{opts[:min]} --max-size #{opts[:max]}"
 
 ## Create an Auto Scaling Group
 # http://docs.aws.amazon.com/AutoScaling/latest/GettingStartedGuide/CreateASGroup.html
 
 CREATE = "as-create-launch-config #{NAME} #{ami_id} #{type} #{region} #{data}"
 LAUNCH = "as-create-auto-scaling-group #{NAME} #{config} #{azones} #{sizes} #{region} #{loadb} #{health}"
-AWAITS = "as-describe-auto-scaling-instances #{region}"
 
-system(CREATE)
-system(LAUNCH)
-system(AWAITS)
+puts CREATE
+puts LAUNCH
+
+# system(CREATE)
+# system(LAUNCH)
 
 ## Describe Auto Scaling Groups
+# as-describe-auto-scaling-instances --region us-west-2
 
 ## Terminate All Instances in AS Group
 # as-update-auto-scaling-group MyASGroup --min-size 0 --max-size 0 --region us-west-2

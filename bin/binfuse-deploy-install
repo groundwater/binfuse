@@ -1,9 +1,34 @@
 #!/usr/bin/env ruby
 
-REGION="us-west-2"
-ROOT_DIR = File.expand_path File.join( __FILE__, "..", "..")
+require 'trollop'
 
-instance_id=ARGV[0]
+## Command Line Options ##
+
+ROOT_DIR = File.expand_path File.join( __FILE__, "..", "..")
+USAGE    = <<-EOF
+Install an application with container to an EC2 Instance via SSH
+
+Usage: 
+  binfuse-deploy-install <instance-id> [options]
+where [options] are:
+EOF
+
+opts = Trollop::options do
+  banner USAGE
+  opt :region,      "EC2 Region",       :short => 'r', :type => :string, :default => 'us-west-2'
+  opt :installfile, "Install File",     :short => 'I', :type => :string, :default => "#{ROOT_DIR}/install.bash"
+end
+
+REGION =opts[:region]
+INSTALL=opts[:installfile]
+
+if ARGV.length < 1
+  Trollop::die "Please Specify Instance ID"
+end
+
+instance_id=ARGV.shift
+
+## End of Command Line Options ##
 
 # Wait for the instance to boot
 puts "Waiting for Instance to Boot..."
@@ -25,7 +50,7 @@ sleep(30)
 puts "Instance is Running"
 puts "Connecting to #{instance_address}"
 
-system("ssh -o StrictHostKeyChecking=no #{instance_address} < #{ROOT_DIR}/install.bash")
+system("ssh -o StrictHostKeyChecking=no #{instance_address} < #{INSTALL}")
 
 puts "System Ready at #{instance_address}"
 puts "Deploying Application"

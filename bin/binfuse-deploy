@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+NAME=ARGV[0]
+AMI_ID=ARGV[1]
+
+USER_DATA_FILE=".env"
+INSTANCE_TYPE="m1.small"
+REGION="us-west-2"
+ELB="demo"
+
+config = "--launch-configuration #{NAME}"
+azones = "--availability-zones us-west-2c,us-west-2a"
+sizes  = "--min-size 2 --max-size 2"
+region = "--region #{REGION}"
+loadb  = "--load-balancers #{ELB}"
+health = "--health-check-type ELB --grace-period 300"
+ami_id = "--image-id #{AMI_ID}"
+data   = "--user-data-file #{USER_DATA_FILE}"
+type   = "--instance-type #{INSTANCE_TYPE}"
+
+## Create an Auto Scaling Group
+# http://docs.aws.amazon.com/AutoScaling/latest/GettingStartedGuide/CreateASGroup.html
+
+CREATE = "as-create-launch-config #{NAME} #{ami_id} #{type} #{region} #{data}"
+LAUNCH = "as-create-auto-scaling-group #{NAME} #{config} #{azones} #{sizes} #{region} #{loadb} #{health}"
+AWAITS = "as-describe-auto-scaling-instances #{region}"
+
+puts CREATE
+puts LAUNCH
+puts AWAITS
+
+## Describe Auto Scaling Groups
+
+## Terminate All Instances in AS Group
+# as-update-auto-scaling-group MyASGroup --min-size 0 --max-size 0 --region us-west-2
+# as-delete-auto-scaling-group MyASGroup --region us-west-2
+# as-delete-launch-config DemoGroup --region us-west-2
+
+## Get Status from Load Balancer
+# elb-describe-instance-health demo --region us-west-2

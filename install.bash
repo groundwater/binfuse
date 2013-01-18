@@ -1,9 +1,9 @@
 # System Updates
-sudo apt-get install -y python-software-properties
+sudo apt-get install    -y python-software-properties
 sudo add-apt-repository -y ppa:chris-lea/node.js
-sudo apt-get update -y
-sudo apt-get upgrade -y
-sudo apt-get install -y nodejs npm nodejs-dev git make
+sudo apt-get update     -y
+sudo apt-get upgrade    -y
+sudo apt-get install    -y nodejs npm nodejs-dev git make
 
 BUNDLE=/home/ubuntu/bundle
 GIT=${BUNDLE}/.git
@@ -14,6 +14,7 @@ MASTER=${BUNDLE}/master
 mkdir -p ${GIT}
 mkdir -p ${DEPLOY}
 
+# Initialize Git Hooks
 (cd ${GIT} && git init --bare)
 cat > ${GIT}/hooks/post-receive <<EOF
 cd ${GIT}
@@ -31,13 +32,10 @@ EOF
 
 chmod a+x ${GIT}/hooks/post-receive
 
-sudo npm install -g general
-ng upstart | sudo tee /etc/init/general.conf
-
+# Install Application Container
+sudo npm install -g git+https://github.com/jacobgroundwater/node-general.git#master
 sudo mkdir -p /var/log/general
 sudo chown ubuntu:ubuntu /var/log/general
 
-curl "http://169.254.169.254/latest/user-data/" 2>/dev/null | sudo tee /var/tmp/envvars
+ng upstart | sudo tee /etc/init/general.conf
 
-# Reboot
-# sudo shutdown -r now

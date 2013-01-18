@@ -22,14 +22,14 @@ where [options] are:
   opt :environment, "Environment File", :short => 'E', :type => :string
 end
 
-KEY_PAIR=opts[:keypair]
 BASE_AMI=opts[:ami]
-REGION  =opts[:region]
-ENVS    =opts[:environment]
+KEY_PAIR="-k '#{opts[:keypair]}'"
+REGION  ="--region #{opts[:region]}"
+envs    ="--user-data-file #{opts[:environment]}" if opts[:environment]
 
 # Launch a New Instance
 # - Returns Instance Details (http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/launching-an-instance.html)
-run_out = `ec2-run-instances #{BASE_AMI} -k '#{KEY_PAIR}' --region '#{REGION}' --user-data-file #{ENVS}`
+run_out = `ec2-run-instances #{BASE_AMI} #{KEY_PAIR} #{REGION} #{envs}`
 run_results = run_out.split
 instance_id = run_results[5]
 instance_status = run_results[7]

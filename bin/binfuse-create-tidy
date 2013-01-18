@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+require 'trollop'
+
+USAGE    = <<-EOF
+Terminate, Delete, or De-register AWS Resources
+
+Usage: 
+  binfuse-deploy-tidy [options]
+where [options] are:
+EOF
+
+opts = Trollop::options do
+  banner USAGE
+  opt :region,      "EC2 Region",       :short => 'r', :type => :string, :default => 'us-west-2'
+  opt :instance,    "Instance ID",      :short => 'I', :type => :string
+end
+
+REGION="--region #{opts[:region]}"
+
+if opts[:instance]
+  system("ec2-terminate-instances #{opts[:instance]} #{REGION}")
+end
+

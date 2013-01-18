@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+if ARGV.length < 1
+  puts "Please Specify a Deployment File"
+  exit -1
+end
+
+config = JSON.parse open(ARGV.shift).read
+
+TARGET=config[:target]
+AMI_ID=config[:ami]
+
+SUBNETIDS=`cat .subnets`
+
+ENVIRON="--environment #{TARGET}"
+LOADBAL="--elb #{TARGET}"
+USERDAT="--userdata .env.#{TARGET}"
+SUBNETS="--subets #{SUBNETIDS}"
+
+ROOT_DIR     = File.expand_path File.join( __FILE__, "..")
+CREATE_SCALE = File.join ROOT_DIR, 'binfuse-deploy-group'
+
+# Boot the Auto Scale Group
+puts "#{CREATE_SCALE} #{TARGET} #{AMI_ID} #{ENVIRON} #{LOADBAL} #{USERDAT} #{SUBNETS}"

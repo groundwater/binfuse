@@ -6,7 +6,7 @@ USAGE    = <<-EOF
 Package a fully configured EC2 image as an AMI
 
 Usage: 
-  binfuse-deploy-package <ami-name> <instance-id> [options]
+  binfuse-deploy-package <as-group-name> <ami-id> [options]
 where [options] are:
 EOF
 
@@ -19,6 +19,8 @@ opts = Trollop::options do
   opt :min,         "Minimum Instance", :short => 'm', :default => 3
   opt :max,         "Maximum Instance", :short => 'M', :default => 3
   opt :zones,     "Availability Zones", :short => 'Z', :type => :string, :default => 'us-west-2a,us-west-2b,us-west-2c'
+  opt :subets,      "Subnet VPC Zones", :shoft => 'S', :type => :string
+  opt :userdata,      "User Data File", :short => 'd', :type => :string
 end
 
 if ARGV.length < 2
@@ -33,6 +35,7 @@ AMI_ID=ARGV.shift
 ENVIRONMENT   =opts[:environment]
 INSTANCE_TYPE =opts[:itype]
 LOAD_BALANCER =opts[:elb]
+USER_DATA     =opts[:userdata]
 
 config = "--launch-configuration #{NAME}"
 region = "--region #{REGION}"
@@ -42,10 +45,15 @@ type   = "--instance-type #{INSTANCE_TYPE}"
 # Optional Settings
 loadb  = "--load-balancers #{LOAD_BALANCER}"          if LOAD_BALANCER
 health = "--health-check-type ELB --grace-period 300" if LOAD_BALANCER
-data   = "--user-data-file #{ENVIRONMENT}"            if ENVIRONMENT
+data   = "--user-data-file #{USER_DATA}"              if USER_DATA
 
 # Options with Defaults
-azones = "--availability-zones #{opts[:zones]}"
+if opts[:subnets]
+  azones = "--vpc-zone-identifier #{opts[:subnets]}"
+else
+  azones = "--availability-zones #{opts[:zones]}"
+end
+
 sizes  = "--min-size #{opts[:min]} --max-size #{opts[:max]}"
 
 ## Create an Auto Scaling Group
@@ -54,11 +62,12 @@ sizes  = "--min-size #{opts[:min]} --max-size #{opts[:max]}"
 CREATE = "as-create-launch-config #{NAME} #{ami_id} #{type} #{region} #{data}"
 LAUNCH = "as-create-auto-scaling-group #{NAME} #{config} #{azones} #{sizes} #{region} #{loadb} #{health}"
 
-puts CREATE
-puts LAUNCH
+puts(CREATE)
+puts(LAUNCH)
 
-# system(CREATE)
-# system(LAUNCH)
+# puts "Group deployment may take a few minutes"
+# puts "Use the following command to view status"
+# puts "as-describe-auto-scaling-instances --region us-west-2"
 
 ## Describe Auto Scaling Groups
 # as-describe-auto-scaling-instances --region us-west-2

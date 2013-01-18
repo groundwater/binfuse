@@ -16,8 +16,8 @@ opts = Trollop::options do
   opt :environment, "Environment File", :short => 'E', :type => :string
   opt :itype,       "Instance Type",    :shoft => 'T', :type => :string, :default => 'm1.small'
   opt :region,      "EC2 Region",       :short => 'r', :type => :string, :default => 'us-west-2'
-  opt :min,         "Minimum Instance", :short => 'm', :default => 0
-  opt :max,         "Maximum Instance", :short => 'M', :default => 0
+  opt :min,         "Minimum Instance", :short => 'm', :default => 3
+  opt :max,         "Maximum Instance", :short => 'M', :default => 3
   opt :zones,     "Availability Zones", :short => 'Z', :type => :string, :default => 'us-west-2a,us-west-2b,us-west-2c'
 end
 

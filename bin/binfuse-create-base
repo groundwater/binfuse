@@ -18,7 +18,7 @@ where [options] are:
   EOS
   opt :region,      "EC2 Region",       :short => 'r', :type => :string, :default => 'us-west-2'
   opt :ami,         "Base AMI",         :short => 'A', :type => :string, :default => 'ami-7e2da54e'
-  opt :keypair,      "Key Pair Name",   :short => 'k', :type => :string, :default => 'NodeFly Master'
+  opt :keypair,     "Key Pair Name",    :short => 'k', :type => :string, :default => 'NodeFly Master'
   opt :environment, "Environment File", :short => 'E', :type => :string
 end
 

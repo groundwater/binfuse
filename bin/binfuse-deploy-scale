@@ -25,9 +25,9 @@ CREATE = "as-create-launch-config #{NAME} #{ami_id} #{type} #{region} #{data}"
 LAUNCH = "as-create-auto-scaling-group #{NAME} #{config} #{azones} #{sizes} #{region} #{loadb} #{health}"
 AWAITS = "as-describe-auto-scaling-instances #{region}"
 
-puts CREATE
-puts LAUNCH
-puts AWAITS
+system(CREATE)
+system(LAUNCH)
+system(AWAITS)
 
 ## Describe Auto Scaling Groups
 

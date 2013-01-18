@@ -30,5 +30,5 @@ system("ssh -o StrictHostKeyChecking=no #{instance_address} < #{ROOT_DIR}/instal
 puts "System Ready at #{instance_address}"
 puts "Deploying Application"
 
-puts `git push #{instance_address}:bundle/.git master`
+system("git push #{instance_address}:bundle/.git master")
 

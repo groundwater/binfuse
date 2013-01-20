@@ -20,7 +20,6 @@ opts = Trollop::options do
   opt :max,         "Maximum Instance", :short => 'M', :default => 3
   opt :zones,     "Availability Zones", :short => 'Z', :type => :string, :default => 'us-west-2a,us-west-2b,us-west-2c'
   opt :subets,      "Subnet VPC Zones", :shoft => 'S', :type => :string
-  opt :userdata,      "User Data File", :short => 'd', :type => :string
 end
 
 if ARGV.length < 2
@@ -35,7 +34,6 @@ AMI_ID=ARGV.shift
 ENVIRONMENT   =opts[:environment]
 INSTANCE_TYPE =opts[:itype]
 LOAD_BALANCER =opts[:elb]
-USER_DATA     =opts[:userdata]
 
 config = "--launch-configuration #{NAME}"
 region = "--region #{REGION}"
@@ -45,7 +43,7 @@ type   = "--instance-type #{INSTANCE_TYPE}"
 # Optional Settings
 loadb  = "--load-balancers #{LOAD_BALANCER}"          if LOAD_BALANCER
 health = "--health-check-type ELB --grace-period 300" if LOAD_BALANCER
-data   = "--user-data-file #{USER_DATA}"              if USER_DATA
+data   = "--user-data-file #{ENVIRONMENT}"            if ENVIRONMENT
 
 # Options with Defaults
 if opts[:subnets]

@@ -1,2 +1,2 @@
-Gemfile.lock
-.bundle
+node_modules
+lib

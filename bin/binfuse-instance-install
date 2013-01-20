@@ -1,0 +1,53 @@
+#!/usr/bin/env coffee
+
+{exec}     = require 'child_process'
+allsync    = require 'allsync'
+program    = require 'commander'
+
+program
+.option('-r, --region   <KEY>', 'Select Region KEY', 'us-west-2')
+.option('-I, --install <FILE>', 'Use Install File',  "#{__dirname}/../data/install.bash")
+.parse( process.argv )
+
+instance_id = program.args.shift()
+
+INSTALL = program.install
+REGION  = program.region
+
+## End of Command Line Options ##
+
+# Wait for the instance to boot
+console.log "Waiting for Instance to Boot..."
+
+instance_status  = "unknown"
+instance_address = ""
+install = ->
+  ssh = "ssh -o StrictHostKeyChecking=no #{instance_address} < #{INSTALL} 2>&1"
+  git = "git push --verbose #{instance_address}:bundle/.git master"
+  
+  console.log "Installing System Packages"  
+  exec ssh, (err)->
+    if err then return console.log 'Error', err else console.log 'Ok'
+    console.log "Installing Application"  
+    exec git, (err)->
+      if err then return console.log 'Error', err else console.log 'Ok'
+  
+poll = ->
+  
+  describe_out     = ""
+  allsync.exec "ec2-describe-instances #{instance_id} --region #{REGION}", (data)->
+    describe_out += data
+  
+  describe_results = describe_out.split /\s+/
+  instance_status  = describe_results[9]
+  instance_address = describe_results[7]
+  
+  if instance_status == "running"
+    setTimeout install, 300
+  else
+    setTimeout ->
+      poll()
+    , 3000
+
+poll()
+

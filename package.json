@@ -1,0 +1,42 @@
+{
+  "name": "binfuse",
+  "version": "0.0.0",
+  "description": "Amazon Deployment Suite",
+  "main": "index.js",
+  "scripts": {
+    "prepublish": "coffee --bare --compile --lint --output lib src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jacobgroundwater/binfuse.git"
+  },
+  "keywords": [
+    "aws",
+    "amazon",
+    "ec2",
+    "auto-scaling",
+    "scaling",
+    "ubuntu"
+  ],
+  "author": "Jacob Groundwater",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "gitHead": "3ea7bcb9dc40985174e38eaa237ce950f14d218e",
+  "devDependencies": {
+    "coffee-script": "~1.4.0"
+  },
+  "bin": {
+    "binfuse-group-deploy": "bin/binfuse-group-deploy",
+    "binfuse-group-modify": "bin/binfuse-group-modify",
+    "binfuse-group-remove": "bin/binfuse-group-remove",
+    "binfuse-instance-create": "bin/binfuse-instance-create",
+    "binfuse-instance-install": "bin/binfuse-instance-install",
+    "binfuse-instance-package": "bin/binfuse-instance-package",
+    "binfuse-instance-remove": "bin/binfuse-instance-remove"
+  },
+  "dependencies": {
+    "allsync": "0.0.2",
+    "commander": "~1.1.1",
+    "nconf": "~0.6.7"
+  }
+}

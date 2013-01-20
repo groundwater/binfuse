@@ -1,0 +1,49 @@
+#!/usr/bin/env coffee
+
+{exec}  = require 'allsync'
+program = require 'commander'
+fs      = require 'fs'
+
+program
+.option('-k, --keypair <PAIR>', 'Use KeyPair PAIR')
+.option('-A, --ami      <KEY>', 'Use Base AMI KEY')
+.option('-r, --region   <KEY>', 'Select Region KEY')
+.parse( process.argv )
+
+if fs.existsSync 'binfuse.json'
+  options = JSON.parse fs.readFileSync 'binfuse.json'
+else
+  options = {}
+
+defaults =
+  keypair: 'default'
+  ami: 'ami-7e2da54e'
+  region: 'us-west-2'
+
+opt = (key)->
+  options[key] || program[key] || defaults[key] || ''
+
+AMI      = opt 'ami'
+KEYPAIR  = opt 'keypair'
+REGION   = opt 'region'
+
+ami      = "#{AMI}"
+keypair  = "-k '#{KEYPAIR}'"
+region   = "--region #{REGION}"
+
+command  = "ec2-run-instances #{ami} #{keypair} #{region} 2>&1"
+
+# Launch a New Instance
+# - Returns Instance Details (http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/launching-an-instance.html)
+run_stdout = ''
+code = exec command, (data)->
+  run_stdout += data
+
+if code != 0
+  console.log run_stdout
+  process.exit code
+
+run_results = run_stdout.split /\s+/
+instance_id = run_results[5]
+
+console.log instance_id

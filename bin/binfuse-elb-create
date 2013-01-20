@@ -1,0 +1,31 @@
+#!/usr/bin/env coffee
+
+{exec}    = require 'allsync'
+program    = require 'commander'
+
+program
+.option('-r, --region   <KEY>', 'Select Region KEY', 'us-west-2')
+.option('-I, --install <FILE>', 'Use Install File',  "#{__dirname}/../data/install.bash")
+.option('-S, --subnets <SUBS>', 'Attached Subnets')
+.option('-l, --listen  <CONF>', 'Listen config', "protocol=http, lb-port=80, instance-port=8080")
+.parse( process.argv )
+
+NAME   = program.args.shift()
+REGION = program.region
+
+region = "--region #{REGION}"
+
+command = "elb-describe-lbs #{region}"
+
+elbs = ''
+exec command, (data)-> elbs += data
+
+elbs = elbs.trim().split /\n/
+exists = false
+elbs.forEach (line)->
+  attr = line.trim().split /\s/
+  if attr[1] == NAME
+    exists = true
+
+if !exists
+  

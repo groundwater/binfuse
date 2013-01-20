@@ -1,0 +1,16 @@
+#!/usr/bin/env coffee
+
+{exec}       = require 'allsync'
+program      = require 'commander'
+
+program
+.usage('[options] <instance-id>')
+.option('-r, --region   <KEY>', 'Select Region KEY', 'us-west-2')
+.parse( process.argv )
+
+instance = program.args.shift()
+REGION   = "--region #{program.region}"
+
+exec "ec2-stop-instances #{instance} --force #{REGION} 2>&1", (data)->
+  process.stdout.write data
+

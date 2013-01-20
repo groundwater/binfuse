@@ -1,0 +1,80 @@
+#!/usr/bin/env coffee
+
+{exec}  = require 'child_process'
+program = require 'commander'
+
+program
+.usage('[options] <name> <ami-id>')
+.option('-r, --region   <KEY>', 'Select Region KEY', 'us-west-2')
+.option('-L, --elb      <ELB>', 'Use Elastic Load Balancer')
+.option('-E, --environ  <ENV>', 'Environment File')
+.option('-T, --itype   <TYPE>', 'Instance Type', 'm1.small')
+.option('-m, --min        <N>', 'Minimum Instance', 3)
+.option('-M, --max        <N>', 'Maximum Instance', 3)
+.option('-Z, --zones  <ZONES>', 'List of Availability Zones', 'us-west-2a,us-west-2b,us-west-2c')
+.option('-S, --subnets <SUBS>', 'List of VPC Subnets')
+.parse( process.argv )
+
+if program.args.length < 2
+  console.log "Please Specify a Group Name and Base AMI"
+  process.exit -1
+
+REGION = program.region
+
+NAME   = program.args.shift()
+AMI_ID = program.args.shift()
+
+ENVIRONMENT   = program.environ
+INSTANCE_TYPE = program.itype
+LOAD_BALANCER = program.elb
+
+WHEN = new Date().toISOString()
+.replace(/-/g,'')
+.replace('T','-')
+.replace(':','')
+.substr(2,11)
+
+GROUPID = "#{NAME}@#{WHEN}"
+
+config = "--launch-configuration #{GROUPID}"
+region = "--region #{REGION}"
+ami_id = "--image-id #{AMI_ID}"
+type   = "--instance-type #{INSTANCE_TYPE}"
+
+# Optional Settings
+loadb  = if LOAD_BALANCER then "--load-balancers #{LOAD_BALANCER}"          else ""
+health = if LOAD_BALANCER then "--health-check-type ELB --grace-period 300" else ""
+data   = if ENVIRONMENT   then "--user-data-file #{ENVIRONMENT}"            else ""
+
+# Options with Defaults
+if program.subnets
+  azones = "--vpc-zone-identifier #{program.subnets}"
+else
+  azones = "--availability-zones #{program.zones}"
+
+sizes  = "--min-size #{program.min} --max-size #{program.max}"
+
+## Create an Auto Scaling Group
+# http://docs.aws.amazon.com/AutoScaling/latest/GettingStartedGuide/CreateASGroup.html
+
+CREATE = "as-create-launch-config #{GROUPID} #{ami_id} #{type} #{region} #{data} 2>&1"
+LAUNCH = "as-create-auto-scaling-group #{GROUPID} #{config} #{azones} #{sizes} #{region} #{loadb} #{health} 2>&1"
+
+exec CREATE, (err,stdout,stderr)->
+  exec LAUNCH, (err,stdout,stderr)->
+    console.log GROUPID
+
+# puts "Group deployment may take a few minutes"
+# puts "Use the following command to view status"
+# puts "as-describe-auto-scaling-instances --region us-west-2"
+
+## Describe Auto Scaling Groups
+# as-describe-auto-scaling-instances --region us-west-2
+
+## Terminate All Instances in AS Group
+# as-update-auto-scaling-group MyASGroup --min-size 0 --max-size 0 --region us-west-2
+# as-delete-auto-scaling-group MyASGroup --region us-west-2
+# as-delete-launch-config DemoGroup --region us-west-2
+
+## Get Status from Load Balancer
+# elb-describe-instance-health demo --region us-west-2

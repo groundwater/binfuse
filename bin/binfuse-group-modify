@@ -1,0 +1,29 @@
+#!/usr/bin/env coffee
+
+{exec}       = require 'child_process'
+program      = require 'commander'
+
+program
+.usage('[options] <group-name>')
+.option('-r, --region   <KEY>', 'Select Region KEY', 'us-west-2')
+.option('-m, --min     <SIZE>', 'Minimum Group size')
+.option('-M, --max     <SIZE>', 'Maximum Group size')
+.parse( process.argv )
+
+program.help() if program.args.length < 1
+
+INSTANCE = program.args.shift()
+REGION   = "--region #{program.region}"
+
+MINIMUM  = if program.min then " --min-size #{program.min}" else ""
+MAXIMUM  = if program.max then " --max-size #{program.max}" else ""
+
+UPDATES  = "#{MINIMUM}#{MAXIMUM}"
+
+COMMAND  = "as-update-auto-scaling-group #{INSTANCE} #{REGION} #{UPDATES}"
+
+console.log COMMAND
+
+exec COMMAND, (err,data)->
+  process.stdout.write data
+

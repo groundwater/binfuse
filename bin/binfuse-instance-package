@@ -1,0 +1,41 @@
+#!/usr/bin/env coffee
+
+{exec,exec2} = require 'allsync'
+program      = require 'commander'
+
+program
+.usage('[options] <name> <instance-id>')
+.option('-r, --region   <KEY>', 'Select Region KEY', 'us-west-2')
+.parse( process.argv )
+
+if program.args.length < 2
+  program.help()
+
+REGION      = program.region
+IMAGE_NAME  = program.args.shift()
+INSTANCE_ID = program.args.shift()
+
+describe_out = ""
+exec "ec2-describe-instances #{INSTANCE_ID} --region #{REGION}", (data)->
+  describe_out += data
+
+describe_results = describe_out.trim().split /\s+/
+instance_status  = describe_results[9]
+instance_address = describe_results[7]
+
+mref = ""
+exec "cat .git/refs/heads/master", (data)->
+  mref += data
+mref = mref.substr 0, 10
+
+AMI_NAME = "#{IMAGE_NAME}-#{mref}"
+
+# Create an AMI Snapshot of Running Image
+# http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-an-ami.html
+out = ""
+exec "ec2-create-image -n #{AMI_NAME} #{INSTANCE_ID} --region #{REGION}", (data)->
+  out += data
+
+ami = out.split(/\s+/)[1]
+
+console.log ami

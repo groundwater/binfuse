@@ -1,13 +1,19 @@
 #!/usr/bin/env coffee
 
-{exec}     = require 'child_process'
-allsync    = require 'allsync'
-program    = require 'commander'
+colors  = require 'colors'
+cp      = require 'child_process'
+fs      = require 'fs'
+
+program = require 'commander'
 
 program
+.usage('[options] <instance-id>')
 .option('-r, --region   <KEY>', 'Select Region KEY', 'us-west-2')
 .option('-I, --install <FILE>', 'Use Install File',  "#{__dirname}/../data/install.bash")
 .parse( process.argv )
+
+if program.args.length < 1
+  program.help()
 
 instance_id = program.args.shift()
 
@@ -17,37 +23,64 @@ REGION  = program.region
 ## End of Command Line Options ##
 
 # Wait for the instance to boot
-console.log "Waiting for Instance to Boot..."
+console.log "Waiting for Instance to Boot"
 
 instance_status  = "unknown"
 instance_address = ""
+
 install = ->
-  ssh = "ssh -o StrictHostKeyChecking=no #{instance_address} < #{INSTALL} 2>&1"
-  git = "git push --verbose #{instance_address}:bundle/.git master"
   
-  console.log "Installing System Packages"  
-  exec ssh, (err)->
-    if err then return console.log 'Error', err else console.log 'Ok'
-    console.log "Installing Application"  
-    exec git, (err)->
-      if err then return console.log 'Error', err else console.log 'Ok'
+  INSTALL = fs.readFileSync(program.install)
+  LOGGER  = fs.openSync 'out.log', 'a'
   
+  SSH = "ssh"
+  SSH_ARGS = [ "-o", "StrictHostKeyChecking=no", "#{instance_address}"]
+  GIT = "git"
+  GIT_ARGS = ["push", "--verbose", "#{instance_address}:bundle/.git", "+master"]
+  
+  console.log "Installing System Packages "
+  
+  ssh = cp.spawn SSH, SSH_ARGS, {stdio: ['pipe',LOGGER,LOGGER] }
+  ssh.stdin.write(INSTALL)
+  ssh.stdin.end()
+  ssh.on 'exit', (code)->
+    if code!=0
+      console.log '%s System Failed to Install - check out.log for details', 'ERROR'.red
+      return
+    else
+      console.log '  %s System Installed', '√'.green
+    
+    console.log "Installing Application "
+    git = cp.spawn GIT, GIT_ARGS, {stdio: ['pipe','pipe','pipe']}
+    git.stdout.on 'data', (data)-> fs.writeSync LOGGER, data, 0, data.length
+    git.stderr.on 'data', (data)-> fs.writeSync LOGGER, data, 0, data.length
+    git.on 'exit', (code)->
+      if code != 0
+        console.log '%s Application Failed to Install - check out.log for details', 'ERROR'.red
+        return
+      else
+        console.log '  %s Application Installed', '√'.green
+
 poll = ->
   
-  describe_out     = ""
-  allsync.exec "ec2-describe-instances #{instance_id} --region #{REGION}", (data)->
-    describe_out += data
+  describe_out = ""
+  command      = "ec2-describe-instances #{instance_id} --region #{REGION}"
   
-  describe_results = describe_out.split /\s+/
-  instance_status  = describe_results[9]
-  instance_address = describe_results[7]
-  
-  if instance_status == "running"
-    setTimeout install, 300
-  else
-    setTimeout ->
-      poll()
-    , 3000
+  cp.exec command, (err,stdout,stderr)->
+    
+    # handle errors
+    
+    describe_results = stdout.split /\s+/
+    instance_status  = describe_results[9]
+    instance_address = describe_results[7]
+    
+    if instance_status == "running"
+      setTimeout install, 300
+    
+    else
+      setTimeout ->
+        poll()
+      , 3000
 
 poll()
 

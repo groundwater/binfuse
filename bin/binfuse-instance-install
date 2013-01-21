@@ -8,41 +8,53 @@ program = require 'commander'
 
 program
 .usage('[options] <instance-id>')
-.option('-r, --region   <KEY>', 'Select Region KEY', 'us-west-2')
-.option('-I, --install <FILE>', 'Use Install File',  "#{__dirname}/../data/install.bash")
+.option('-r, --region   <KEY>', 'Select Region KEY')
+.option('-I, --install <FILE>', 'Use Install File')
 .parse( process.argv )
 
 if program.args.length < 1
   program.help()
 
-instance_id = program.args.shift()
+if fs.existsSync 'binfuse.json'
+  options = JSON.parse fs.readFileSync 'binfuse.json'
+else
+  options = {}
 
-INSTALL = program.install
-REGION  = program.region
+defaults =
+  region: 'us-west-2'
+  install: "#{__dirname}/../data/install.bash"
+
+opt = (key)->
+  options[key] || program[key] || defaults[key] || ''
+
+INSTALL = opt 'install'
+REGION  = opt 'region'
+
+instance_id = program.args.shift()
 
 ## End of Command Line Options ##
 
 # Wait for the instance to boot
-console.log "Waiting for Instance to Boot"
+console.log "%s Waiting for Instance to be Ready", "[INFO]".cyan
 
 instance_status  = "unknown"
 instance_address = ""
 
 install = ->
   
-  INSTALL = fs.readFileSync(program.install)
-  LOGGER  = fs.openSync 'out.log', 'a'
+  SCRIPT = fs.readFileSync(INSTALL)
+  LOGGER = fs.openSync 'out.log', 'a'
   
   SSH = "ssh"
   SSH_ARGS = [ "-o", "StrictHostKeyChecking=no", "#{instance_address}"]
   GIT = "git"
   GIT_ARGS = ["push", "--verbose", "#{instance_address}:bundle/.git", "+master"]
   
-  console.log "Installing System Packages "
+  console.log "%s Logging Installation in File: out.log", "[INFO]".cyan
+  console.log "%s Installing System Packages ", "[INFO]".cyan
   
   ssh = cp.spawn SSH, SSH_ARGS, {stdio: ['pipe',LOGGER,LOGGER] }
-  ssh.stdin.write(INSTALL)
-  ssh.stdin.end()
+  ssh.stdin.end SCRIPT
   ssh.on 'exit', (code)->
     if code!=0
       console.log '%s System Failed to Install - check out.log for details', 'ERROR'.red
@@ -75,7 +87,8 @@ poll = ->
     instance_address = describe_results[7]
     
     if instance_status == "running"
-      setTimeout install, 300
+      console.log "%s Instance Ready - Waiting for Boot", "[INFO]".cyan
+      setTimeout install, 30000
     
     else
       setTimeout ->

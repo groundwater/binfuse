@@ -26,8 +26,6 @@ ln -snf \${NEXT} ${MASTER}
 (cd ${MASTER} && sudo make install)
 NOW=\`date\`
 echo "\${NOW} Deployed \${HEAD}" >> bundle.log
-sudo stop general
-sudo start general
 EOF
 
 chmod a+x ${GIT}/hooks/post-receive

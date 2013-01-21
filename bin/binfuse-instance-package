@@ -33,8 +33,12 @@ AMI_NAME = "#{IMAGE_NAME}-#{mref}"
 # Create an AMI Snapshot of Running Image
 # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-an-ami.html
 out = ""
-exec "ec2-create-image -n #{AMI_NAME} #{INSTANCE_ID} --region #{REGION}", (data)->
+code = exec "ec2-create-image -n #{AMI_NAME} #{INSTANCE_ID} --region #{REGION} 2>&1", (data)->
   out += data
+
+if code != 0
+  console.log out
+  process.exit code
 
 ami = out.split(/\s+/)[1]
 

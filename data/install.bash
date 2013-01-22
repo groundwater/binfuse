@@ -31,9 +31,9 @@ EOF
 chmod a+x ${GIT}/hooks/post-receive
 
 # Install Application Container
-sudo npm install -g git+https://github.com/jacobgroundwater/node-general.git#master
-sudo mkdir -p /var/log/general
-sudo chown ubuntu:ubuntu /var/log/general
+sudo npm install -g git+https://github.com/jacobgroundwater/node-chief.git#master
+sudo mkdir -p /var/log/chief
+sudo chown ubuntu:ubuntu /var/log/chief
 
-ng upstart | sudo tee /etc/init/general.conf
+chief upstart | sudo tee /etc/init/chief.conf
 

@@ -26,6 +26,7 @@
     "coffee-script": "~1.4.0"
   },
   "bin": {
+    "binfuse-connect": "bin/binfuse-connect",
     "binfuse-group-deploy": "bin/binfuse-group-deploy",
     "binfuse-group-modify": "bin/binfuse-group-modify",
     "binfuse-group-remove": "bin/binfuse-group-remove",

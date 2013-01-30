@@ -1,8 +1,10 @@
 #!/usr/bin/env coffee
 
 {exec}  = require 'child_process'
+allsync = require 'allsync'
 program = require 'commander'
 fs      = require 'fs'
+path    = require 'path'
 
 program
 .usage('[options] <name> <ami-id>')
@@ -14,11 +16,8 @@ program
 .option('-M, --max        <N>', 'Maximum Instance')
 .option('-Z, --zones  <ZONES>', 'List of Availability Zones')
 .option('-S, --subnets <SUBS>', 'List of VPC Subnets')
+.option('-H, --health  <TYPE>', 'Type of Health Check')
 .parse( process.argv )
-
-if program.args.length < 2
-  console.log "Please Specify a Group Name and Base AMI"
-  process.exit -1
 
 if fs.existsSync 'binfuse.json'
   options = JSON.parse fs.readFileSync 'binfuse.json'
@@ -42,6 +41,7 @@ REGION   = opt 'region'
 NAME   = program.args.shift()
 AMI_ID = program.args.shift()
 
+HEALTHCHECK   = opt 'health'
 ENVIRONMENT   = opt 'environ'
 INSTANCE_TYPE = opt 'itype'
 LOAD_BALANCER = opt 'elb'
@@ -67,8 +67,8 @@ sizes  = "--min-size #{MIN_SIZE} --max-size #{MAX_SIZE}"
 
 # Optional Settings
 loadb  = if LOAD_BALANCER then "--load-balancers #{LOAD_BALANCER}"          else ""
-health = if LOAD_BALANCER then "--health-check-type ELB --grace-period 300" else ""
 data   = if ENVIRONMENT   then "--user-data-file #{ENVIRONMENT}"            else ""
+health = if HEALTHCHECK   then "--health-check-type #{HEALTHCHECK} --grace-period 300" else ""
 
 # Options with Defaults
 if SUBNETS
@@ -79,12 +79,28 @@ else
 ## Create an Auto Scaling Group
 # http://docs.aws.amazon.com/AutoScaling/latest/GettingStartedGuide/CreateASGroup.html
 
+ENVIRONMENT_BASE_NAME = path.basename ENVIRONMENT
+ENVIRONMENT_SHA1      = ''
+allsync.exec "shasum #{ENVIRONMENT} | cut -b 1-8", (data)->
+  ENVIRONMENT_SHA1 += data
+LAUNCH_CONFIG_NAME    = "#{ENVIRONMENT_BASE_NAME}@#{ENVIRONMENT_SHA1}"
+
 CREATE = "as-create-launch-config #{GROUPID} #{ami_id} #{type} #{region} #{data} 2>&1"
 LAUNCH = "as-create-auto-scaling-group #{GROUPID} #{config} #{azones} #{sizes} #{region} #{loadb} #{health} 2>&1"
 
-exec CREATE, (err,stdout,stderr)->
-  exec LAUNCH, (err,stdout,stderr)->
-    console.log GROUPID
+if NAME && AMI_ID
+  exec CREATE, (err,stdout,stderr)->
+    exec LAUNCH, (err,stdout,stderr)->
+      console.log GROUPID
+else
+  out = ''
+  allsync.exec "ec2-describe-images --owner self #{region} | grep IMAGE", (data)->
+    out += data
+  lines = out.trim().split /\n/
+  lines.forEach (line)->
+    split = line.trim().split /\s+/
+    console.log '%s\t%s', split[1], split[2]
+  console.error "Please Specify a Group Name and Base AMI"
 
 # puts "Group deployment may take a few minutes"
 # puts "Use the following command to view status"

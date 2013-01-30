@@ -1,5 +1,8 @@
+# Set Timezone
+sudo cp /usr/share/zoneinfo/US/Central /etc/localtime
+
 # System Updates
-sudo apt-get install    -y python-software-properties
+sudo apt-get install    -y python-software-properties python g++ make
 sudo add-apt-repository -y ppa:chris-lea/node.js
 sudo apt-get update     -y
 sudo apt-get upgrade    -y

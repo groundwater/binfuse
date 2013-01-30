@@ -10,20 +10,24 @@ program
 .option('-M, --max     <SIZE>', 'Maximum Group size')
 .parse( process.argv )
 
-program.help() if program.args.length < 1
-
-INSTANCE = program.args.shift()
 REGION   = "--region #{program.region}"
+DESCRIBE = "as-describe-auto-scaling-groups #{REGION} | grep AUTO-SCALING-GROUP"
 
-MINIMUM  = if program.min then " --min-size #{program.min}" else ""
-MAXIMUM  = if program.max then " --max-size #{program.max}" else ""
+if program.args.length < 1
+  exec DESCRIBE, (err,data)->
+    process.stdout.write data
+else
+  INSTANCE = program.args.shift()
 
-UPDATES  = "#{MINIMUM}#{MAXIMUM}"
+  MINIMUM  = if program.min then " --min-size #{program.min}" else ""
+  MAXIMUM  = if program.max then " --max-size #{program.max}" else ""
 
-COMMAND  = "as-update-auto-scaling-group #{INSTANCE} #{REGION} #{UPDATES}"
+  UPDATES  = "#{MINIMUM}#{MAXIMUM}"
 
-console.log COMMAND
+  COMMAND  = "as-update-auto-scaling-group #{INSTANCE} #{REGION} #{UPDATES}"
 
-exec COMMAND, (err,data)->
-  process.stdout.write data
+  console.log COMMAND
+
+  exec COMMAND, (err,data)->
+    process.stdout.write data
 

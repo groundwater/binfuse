@@ -45,6 +45,12 @@ install = ->
   SCRIPT = fs.readFileSync(INSTALL)
   LOGGER = fs.openSync 'out.log', 'a'
   
+  try
+    BUILDFILE = fs.readFileSync './Buildfile'
+  catch e
+    BUILDFILE = ''
+    console.log '%s No Buildfile Found', '[INFO]'.cyan
+  
   SSH = "ssh"
   SSH_ARGS = [ "-o", "StrictHostKeyChecking=no", "#{instance_address}"]
   GIT = "git"
@@ -54,7 +60,10 @@ install = ->
   console.log "%s Installing System Packages ", "[INFO]".cyan
   
   ssh = cp.spawn SSH, SSH_ARGS, {stdio: ['pipe',LOGGER,LOGGER] }
-  ssh.stdin.end SCRIPT
+  ssh.stdin.write SCRIPT
+  ssh.stdin.write BUILDFILE
+  ssh.stdin.end()
+  
   ssh.on 'exit', (code)->
     if code!=0
       console.log '%s System Failed to Install - check out.log for details', 'ERROR'.red
@@ -62,7 +71,7 @@ install = ->
     else
       console.log '  %s System Installed', '√'.green
     
-    console.log "Installing Application "
+    console.log "%s Installing Application ", '[INFO]'.cyan
     git = cp.spawn GIT, GIT_ARGS, {stdio: ['pipe','pipe','pipe']}
     git.stdout.on 'data', (data)-> fs.writeSync LOGGER, data, 0, data.length
     git.stderr.on 'data', (data)-> fs.writeSync LOGGER, data, 0, data.length

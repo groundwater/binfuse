@@ -8,8 +8,19 @@ program
 .option('-r, --region   <KEY>', 'Select Region KEY', 'us-west-2')
 .parse( process.argv )
 
-instance = program.args.shift()
 REGION   = "--region #{program.region}"
+
+if program.args.length < 1
+  out = ''
+  exec "ec2-describe-instances #{REGION} --show-empty-fields | grep INSTANCE", (data)->
+    out += data
+  out.trim().split(/\n/).forEach (line)->
+    split = line.trim().split(/\s+/)
+    if split[3] != '(nil)'
+      console.log(split[1],split[5],split[10],split[12],split[17])
+  process.exit 0
+
+instance = program.args.shift()
 
 exec "ec2-stop-instances #{instance} --force #{REGION} 2>&1", (data)->
   process.stdout.write data

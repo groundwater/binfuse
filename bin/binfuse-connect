@@ -1,0 +1,36 @@
+#!/bin/bash
+
+REGION="-region us-west-2"
+INSTANCE=$(ec2-describe-instances $1 --show-empty-fields ${REGION} | grep INSTANCE )
+STATUS=$(echo ${INSTANCE} | awk -s '{print $6}')
+
+if [ -z "${INSTANCE}" ]
+then
+  echo "Instance $1 Not Found"
+  exit -1
+fi
+
+if [ -z "$1" ]
+then
+  as-describe-auto-scaling-instances ${REGION}
+  exit 0
+fi
+
+echo "Looking Up Host $1"
+
+if [ "${DEBUG}" ]
+then
+  echo ${INSTANCE}
+fi
+
+if [ "${STATUS}" != "running" ]
+then
+  echo "Error: Instance $1 Has Status ${STATUS}"
+  exit -1
+fi
+
+IP=$(echo ${INSTANCE} | awk -s '{print $18}')
+
+echo "Connecting to Host ${IP}"
+
+exec ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ~/.ssh/aws-us-west-2.pem ubuntu@${IP}

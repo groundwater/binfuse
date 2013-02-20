@@ -1,5 +1,7 @@
 ## Quick Start
 
+**Note** You _must_ have the AWS [auto scaling][3] and [ec2][4] command line tools installed.
+
 ```
 $ binfuse-instance-create 
 i-a8d5bd9a
@@ -32,4 +34,5 @@ $ binfuse-connect i-ce2f44fc
 
 [1]: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html
 [2]: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingAttributesWhileInstanceStopped.html
-[3]: http://ddollar.github.com/foreman/#PROCFILE
+[3]: http://aws.amazon.com/developertools/2535
+[4]: http://aws.amazon.com/developertools/368

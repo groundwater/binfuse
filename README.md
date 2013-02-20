@@ -1,6 +1,9 @@
-## Quick Start
+## Installation
 
-**Note** You _must_ have the AWS [auto scaling][3] and [ec2][4] command line tools installed.
+1. You _must_ have the AWS [auto scaling][3] and [ec2][4] command line tools installed.
+2. Install coffee-script `npm install -g coffee-script`
+
+## Quick Start
 
 ```
 $ binfuse-instance-create 

@@ -1,7 +1,6 @@
 #!/usr/bin/env coffee
 
 {exec}  = require 'child_process'
-allsync = require 'allsync'
 program = require 'commander'
 fs      = require 'fs'
 path    = require 'path'

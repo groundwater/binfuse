@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee
 
-{exec}       = require 'allsync'
+{exec}       = require 'child_process'
 program      = require 'commander'
 
 program
@@ -22,6 +22,6 @@ if program.args.length < 1
 
 instance = program.args.shift()
 
-exec "ec2-stop-instances #{instance} --force #{REGION} 2>&1", (data)->
+run = exec "ec2-stop-instances #{instance} --force #{REGION} 2>&1", {stdio:'pipe'}
+run.stdout.on 'data', (data)->
   process.stdout.write data
-

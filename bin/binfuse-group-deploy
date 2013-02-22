@@ -81,38 +81,30 @@ else
 
 ENVIRONMENT_BASE_NAME = path.basename ENVIRONMENT
 ENVIRONMENT_SHA1      = ''
-allsync.exec "shasum #{ENVIRONMENT} | cut -b 1-8", (data)->
+run = exec "shasum #{ENVIRONMENT} | cut -b 1-8", {stdio:'pipe'}
+run.stdout.on 'data', (data)->
   ENVIRONMENT_SHA1 += data
-LAUNCH_CONFIG_NAME    = "#{ENVIRONMENT_BASE_NAME}@#{ENVIRONMENT_SHA1}"
+run.on 'exit', ->
+  
+  LAUNCH_CONFIG_NAME    = "#{ENVIRONMENT_BASE_NAME}@#{ENVIRONMENT_SHA1}"
 
-CREATE = "as-create-launch-config #{GROUPID} #{ami_id} #{type} #{region} #{data} 2>&1"
-LAUNCH = "as-create-auto-scaling-group #{GROUPID} #{config} #{azones} #{sizes} #{region} #{loadb} #{health} 2>&1"
+  CREATE = "as-create-launch-config #{GROUPID} #{ami_id} #{type} #{region} #{data} 2>&1"
+  LAUNCH = "as-create-auto-scaling-group #{GROUPID} #{config} #{azones} #{sizes} #{region} #{loadb} #{health} 2>&1"
 
-if NAME && AMI_ID
-  exec CREATE, (err,stdout,stderr)->
-    exec LAUNCH, (err,stdout,stderr)->
-      console.log GROUPID
-else
-  out = ''
-  allsync.exec "ec2-describe-images --owner self #{region} | grep IMAGE", (data)->
-    out += data
-  lines = out.trim().split /\n/
-  lines.forEach (line)->
-    split = line.trim().split /\s+/
-    console.log '%s\t%s', split[1], split[2]
-  console.error "Please Specify a Group Name and Base AMI"
+  if NAME && AMI_ID
+    exec CREATE, (err,stdout,stderr)->
+      exec LAUNCH, (err,stdout,stderr)->
+        console.log GROUPID
+  else
+    out = ''
+    run = exec "ec2-describe-images --owner self #{region} | grep IMAGE", {stdio:'pipe'}
+    run.stdio.on 'data', (data)->
+      out += data
+    run.on 'exit', ->
+      
+      lines = out.trim().split /\n/
+      lines.forEach (line)->
+        split = line.trim().split /\s+/
+        console.log '%s\t%s', split[1], split[2]
+      console.error "Please Specify a Group Name and Base AMI"
 
-# puts "Group deployment may take a few minutes"
-# puts "Use the following command to view status"
-# puts "as-describe-auto-scaling-instances --region us-west-2"
-
-## Describe Auto Scaling Groups
-# as-describe-auto-scaling-instances --region us-west-2
-
-## Terminate All Instances in AS Group
-# as-update-auto-scaling-group MyASGroup --min-size 0 --max-size 0 --region us-west-2
-# as-delete-auto-scaling-group MyASGroup --region us-west-2
-# as-delete-launch-config DemoGroup --region us-west-2
-
-## Get Status from Load Balancer
-# elb-describe-instance-health demo --region us-west-2

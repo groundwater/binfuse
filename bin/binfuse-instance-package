@@ -1,7 +1,7 @@
 #!/usr/bin/env coffee
 
-{exec,exec2} = require 'allsync'
-program      = require 'commander'
+{exec}   = require 'child_process'
+program  = require 'commander'
 
 program
 .usage('[options] <name> <instance-id>')
@@ -16,30 +16,38 @@ IMAGE_NAME  = program.args.shift()
 INSTANCE_ID = program.args.shift()
 
 describe_out = ""
-exec "ec2-describe-instances #{INSTANCE_ID} --region #{REGION}", (data)->
+describe = exec "ec2-describe-instances #{INSTANCE_ID} --region #{REGION}", {stdio:'pipe'}
+describe.stdout.on 'data', (data)->
   describe_out += data
+describe.on 'exit', ->
+  
+  describe_results = describe_out.trim().split /\s+/
+  instance_status  = describe_results[9]
+  instance_address = describe_results[7]
 
-describe_results = describe_out.trim().split /\s+/
-instance_status  = describe_results[9]
-instance_address = describe_results[7]
+  mref = ""
+  cat = exec "cat .git/refs/heads/master", {stdio:'pipe'}
+  cat.stdout.on 'data', (data)->
+    mref += data
+  cat.on 'exit', ->
+    
+    mref = mref.substr 0, 10
 
-mref = ""
-exec "cat .git/refs/heads/master", (data)->
-  mref += data
-mref = mref.substr 0, 10
+    AMI_NAME = "#{IMAGE_NAME}-#{mref}"
 
-AMI_NAME = "#{IMAGE_NAME}-#{mref}"
+    # Create an AMI Snapshot of Running Image
+    # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-an-ami.html
+    out = ""
+    code = exec "ec2-create-image -n #{AMI_NAME} #{INSTANCE_ID} --region #{REGION} 2>&1", {stdio:'pipe'}
+    code.stdout.on 'data', (data)->
+      out += data
 
-# Create an AMI Snapshot of Running Image
-# http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-an-ami.html
-out = ""
-code = exec "ec2-create-image -n #{AMI_NAME} #{INSTANCE_ID} --region #{REGION} 2>&1", (data)->
-  out += data
+    code.on 'exit', ->
+      
+      if code != 0
+        console.log out
+        process.exit code
 
-if code != 0
-  console.log out
-  process.exit code
+      ami = out.split(/\s+/)[1]
 
-ami = out.split(/\s+/)[1]
-
-console.log ami
+      console.log ami

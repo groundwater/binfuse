@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee
 
-{exec}  = require 'allsync'
+{exec}  = require 'child_process'
 program = require 'commander'
 fs      = require 'fs'
 
@@ -36,14 +36,15 @@ command  = "ec2-run-instances #{ami} #{keypair} #{region} 2>&1"
 # Launch a New Instance
 # - Returns Instance Details (http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/launching-an-instance.html)
 run_stdout = ''
-code = exec command, (data)->
+code = exec command, {stdio:'pipe'}
+code.stdout.on 'data', (data)->
   run_stdout += data
+code.on 'exit', (code)->
+  if code != 0
+    console.log run_stdout
+    process.exit code
 
-if code != 0
-  console.log run_stdout
-  process.exit code
+  run_results = run_stdout.split /\s+/
+  instance_id = run_results[5]
 
-run_results = run_stdout.split /\s+/
-instance_id = run_results[5]
-
-console.log instance_id
+  console.log instance_id

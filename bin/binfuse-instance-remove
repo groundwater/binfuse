@@ -25,3 +25,7 @@ instance = program.args.shift()
 run = exec "ec2-stop-instances #{instance} --force #{REGION} 2>&1", {stdio:'pipe'}
 run.stdout.on 'data', (data)->
   process.stdout.write data
+run.on 'exit', ->
+  run2 = exec "ec2-terminate-instances #{instance} #{REGION} 2>&1", {stdio:'pipe'}
+  run2.stdout.on 'data', (data)->
+    process.stdout.write data

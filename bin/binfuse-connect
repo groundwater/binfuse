@@ -2,7 +2,7 @@
 
 REGION="-region us-west-2"
 INSTANCE=$(ec2-describe-instances $1 --show-empty-fields ${REGION} | grep INSTANCE )
-STATUS=$(echo ${INSTANCE} | awk -s '{print $6}')
+STATUS=$(echo ${INSTANCE} | awk '{print $6}')
 
 if [ -z "${INSTANCE}" ]
 then
@@ -29,7 +29,7 @@ then
   exit -1
 fi
 
-IP=$(echo ${INSTANCE} | awk -s '{print $18}')
+IP=$(echo ${INSTANCE} | awk '{print $18}')
 
 echo "Connecting to Host ${IP}"
 

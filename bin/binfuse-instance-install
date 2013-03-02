@@ -10,6 +10,7 @@ program
 .usage('[options] <instance-id>')
 .option('-r, --region   <KEY>', 'Select Region KEY')
 .option('-I, --install <FILE>', 'Use Install File')
+.option('-B, --branch <BRANCH>', 'Use Git Branch', 'master')
 .parse( process.argv )
 
 if program.args.length < 1
@@ -54,7 +55,7 @@ install = ->
   SSH = "ssh"
   SSH_ARGS = [ "-o", "StrictHostKeyChecking=no", "#{instance_address}"]
   GIT = "git"
-  GIT_ARGS = ["push", "--verbose", "#{instance_address}:bundle/.git", "+master"]
+  GIT_ARGS = ["push", "--verbose", "#{instance_address}:bundle/.git", "+" + program.branch + ":master"]
   
   console.log "%s Logging Installation in File: out.log", "[INFO]".cyan
   console.log "%s Installing System Packages ", "[INFO]".cyan

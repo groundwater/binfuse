@@ -1,6 +1,6 @@
 {
   "name": "binfuse",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Amazon Deployment Suite",
   "main": "index.js",
   "repository": {

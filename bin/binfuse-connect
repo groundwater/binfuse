@@ -33,4 +33,4 @@ IP=$(echo ${INSTANCE} | awk '{print $18}')
 
 echo "Connecting to Host ${IP}"
 
-exec ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ~/.ssh/aws-us-west-2.pem ubuntu@${IP}
+exec ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${IP}
